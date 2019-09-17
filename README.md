@@ -3,6 +3,10 @@ A basic postgres Docker setup for going through [The Art of PostgreSQL](https://
 by Dimitri Fontaine. It uses the official PostgreSQL 9 (what the book uses)
 Docker image and comes with `pgloader`. Data is stored in `pgdata` as a mounted volume mapped to `/var/lib/postgresql/data` in the container for persistence.
 
+A `.psqlrc` file is included, along with three text editors: emacs, nano and
+vim. You can choose your favorite and set it in the `.psqlrc` file (the default
+is `nano` for the broadest accessibility).
+
 # Using
 First, build the image and bring the container up.
 
