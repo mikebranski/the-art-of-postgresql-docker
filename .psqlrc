@@ -1,5 +1,8 @@
 -- Recommended psql config from Chapter 6: The SQL REPL — An Interactive Setup
 
+-- These set commands are noisy; let's shush 'em.
+\set QUIET ON
+
 \set PROMPT1 '%~%x%# '
 \x auto
 \set ON_ERROR_STOP on
@@ -10,8 +13,10 @@
 \pset unicode_border_linestyle single
 \pset unicode_column_linestyle single
 \pset unicode_header_linestyle double
-set intervalstyle to 'postgres_verbose';
+\set intervalstyle to 'postgres_verbose';
 
 \setenv LESS '-iMFXSx4R'
-- Take your pick: emacs, nano, vim, or install another
+-- Take your pick: emacs, nano, vim, or install another
 \setenv EDITOR 'vim'
+
+\set QUIET OFF
