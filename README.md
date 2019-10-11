@@ -25,3 +25,11 @@ $ docker exec -it artofpostgres bash
 
 ## GUI
 Point your graphical client to `postgresql://postgres@127.0.0.1:5440`.
+
+# Chinook data
+You can seed the Chinook database used in TAOP using the provided
+`fetch-chinook-data.sh` script.
+
+```shell
+$ docker exec -it artofpostgres fetch-chinook-data.sh
+```
