@@ -1,10 +1,10 @@
 version: '3.1'
 services:
   db:
-    container_name: artofpostgres
     build: .
-    restart: always
+    container_name: artofpostgres
     ports:
       - 5440:5432
+    restart: always
     volumes:
-      - ./pgdata:/var/lib/postgresql/data
+      - .:/var/lib/postgresql
