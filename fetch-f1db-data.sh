@@ -5,54 +5,62 @@
 
 set -e
 
+NC='\033[0m' # No color (reset)
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+
 F1DB_DB_NAME=f1db
 F1DB_SQLITE_DATASOURCE=http://ergast.com/downloads/f1db.sql.gz
 
-echo "Fetching latest version of f1db..."
-
+echo -e "${GREEN}Fetching latest version of f1db...${NC}"
 wget $F1DB_SQLITE_DATASOURCE -Nq
 gunzip -kf f1db.sql.gz
 
-echo "Starting MySQL..."
-
+echo -e "${GREEN}Installing and starting MariaDB...${NC}"
+sudo apt-get update > /dev/null
+sudo apt-get install -y mariadb-server mariadb-client > /dev/null
 sudo /etc/init.d/mysql start > /dev/null
 
 until pg_isready > /dev/null && pgrep mysql | wc -l > /dev/null; do
-  echo "Waiting for PostgreSQL and MySQL to start"
+  echo -e "${YELLOW}Waiting for PostgreSQL and MySQL to start${NC}"
   sleep 1
 done
 
-echo "Creating intermediary MySQL database and importing f1db data..."
+echo -e "${GREEN}Creating intermediary MariaDB database and importing f1db data...${NC}"
+sudo mysql -u root -e "DROP DATABASE IF EXISTS $F1DB_DB_NAME;"
+sudo mysql -u root -e "CREATE DATABASE $F1DB_DB_NAME;"
+sudo mysql -u root -e "USE $F1DB_DB_NAME; SOURCE f1db.sql;"
 
-# Create MySQL user
-sudo mysql -e "CREATE USER IF NOT EXISTS 'mysql'@'%';"
-sudo mysql -e "SET PASSWORD FOR 'mysql'@'%' = PASSWORD('artofpostgres');"
-# sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'mysql'@'%';"
-sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'mysql'@'%' IDENTIFIED BY 'artofpostgres' WITH GRANT OPTION;"
-sudo mysql -e "FLUSH PRIVILEGES;"
-
-# Create MySQL database and import F1DB data
-sudo mysql -e "DROP DATABASE IF EXISTS f1db; CREATE DATABASE f1db;"
-sudo mysql f1db < f1db.sql
+sudo mysql -e "CREATE USER IF NOT EXISTS 'postgres'@'localhost';"
+sudo mysql -e "CREATE USER IF NOT EXISTS 'postgres'@'$HOST_IP';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'postgres'@'localhost';"
+sudo mysql -e "GRANT ALL PRIVILEGES ON *.* TO 'postgres'@'$HOST_IP';"
 
 if psql -lqt | cut -d \| -f 1 | grep -qw $F1DB_DB_NAME; then
   if [[ $1 == "--recreate" ]]; then
-    echo "--recreate flag was given, dropping database $F1DB_DB_NAME"
+    echo -e "${YELLOW}--recreate flag was given, dropping database $F1DB_DB_NAME${NC}"
     dropdb $F1DB_DB_NAME
   else
-    echo "$F1DB_DB_NAME PostgreSQL database already exists, skipping"
-    echo "Include the --recreate flag if you want to drop and reseed the database"
+    echo -e "${RED}$F1DB_DB_NAME PostgreSQL database already exists, skipping${NC}"
+    echo -e "${RED}Include the --recreate flag if you want to drop and reseed the database${NC}"
     exit 1
   fi
 fi
 
-echo "Creating PostgreSQL database..."
+echo -e "${GREEN}Creating PostgreSQL database...${NC}"
 createdb $F1DB_DB_NAME
 
-echo "Migrating f1db data from MySQL to PostgreSQL"
-
+echo -e "${GREEN}Migrating f1db data from MySQL to PostgreSQL${NC}"
 pgloader \
-  mysql://mysql:artofpostgres@0.0.0.0:3306/$F1DB_DB_NAME \
-  pgsql://postgres@0.0.0.0:5432/$F1DB_DB_NAME
+  mysql://postgres@localhost/$F1DB_DB_NAME \
+  pgsql://postgres@localhost/$F1DB_DB_NAME \
+  > /dev/null
 
-echo "Done!"
+echo -e "${GREEN}Cleaning up...${NC}"
+sudo mysql -u root -e "DROP DATABASE IF EXISTS $F1DB_DB_NAME;"
+sudo /etc/init.d/mysql stop > /dev/null
+yes | sudo apt-get autoremove --purge mariadb-server mariadb-client > /dev/null
+rm f1db.sql
+
+echo -e "${GREEN}Done! 🎉${NC}"
