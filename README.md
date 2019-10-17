@@ -26,10 +26,24 @@ $ docker exec -it artofpostgres bash
 ## GUI
 Point your graphical client to `postgresql://postgres@127.0.0.1:5440`.
 
-# Chinook data
+# Seeding data
+
+## Chinook music database
 You can seed the Chinook database used in TAOP using the provided
 `fetch-chinook-data.sh` script.
 
 ```shell
 $ docker exec -it artofpostgres fetch-chinook-data.sh
+```
+
+## F1DB data
+Since the PostgreSQL F1DB dump doesn't work without modification, we keep the
+import compatible with future versions by importing into MySQL first and then
+moving the data over to PostgreSQL using `pgloader`.
+
+```bash
+$ docker exec -it artofpostgres ./fetch-f1db-data.sh
+
+# PostgreSQL database
+$ docker exec -it artofpostgres ./fetch-f1db-data.sh --recreate
 ```

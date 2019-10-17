@@ -1,7 +1,12 @@
 FROM postgres:9
 
 RUN apt-get update
-RUN apt-get install -y pgloader emacs nano vim
+# General dependencies
+RUN apt-get install -y emacs nano vim wget sudo pgloader
+
+# Give postgres user sudo privileges
+RUN usermod -a -G sudo postgres; \
+    echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER postgres
 
